@@ -129,8 +129,11 @@ def classify(alert: MerakiAlert) -> AlertKind:
 
 
 # Text an outsider can set (a device name, an SSID, a client hostname) that
-# reads like an instruction to an AI. This only flags: per Behavry's precision
-# rule a fuzzy detector records for a person, it never drops the alert.
+# reads like an instruction to an AI. Illustrative, not exhaustive: a phrase
+# list is easy to word around, which is why it only flags. A fuzzy check
+# should send the alert to a person, never drop it, and it is one layer of
+# several: the prompt fences the alert as data, the model reports suspicious
+# content independently, and Behavry policy holds any action regardless.
 _INSTRUCTION_LIKE = re.compile(
     r"(ignore|disregard|forget)\s+(all|any|the|previous|prior|above)"
     r"|system\s*prompt|you\s+are\s+now|as\s+an\s+ai|new\s+instructions"

@@ -23,7 +23,7 @@ from typing import Any
 
 import httpx
 
-# Behavry's JSON-RPC codes for a governance outcome (backend proxy/engine.py).
+# Behavry's JSON-RPC error codes for a governance outcome.
 JSONRPC_FORBIDDEN = -32003
 JSONRPC_ESCALATED = -32004
 
