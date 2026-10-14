@@ -1,0 +1,49 @@
+/* Behavry example guide: print styles. Brand tokens from Behavry brand v2f. */
+:root {
+  --navy-900: #060E1C; --navy-800: #0A1628; --navy-500: #1B2A4A;
+  --amber-600: #A87322; --amber-500: #C8922A; --amber-400: #D4A843; --amber-100: #F5E4B2;
+  --ink: #14181F; --muted: #5B6577; --rule: #E3E6EB; --wash: #F6F7F9;
+}
+@page { size: Letter; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 10.5pt; line-height: 1.55; color: var(--ink); margin: 0;
+}
+.cover { border-bottom: 3px solid var(--amber-400); padding-bottom: 18pt; margin-bottom: 22pt; }
+.cover .logo svg { height: 42pt; width: auto; display: block; margin-left: -4pt; }
+.eyebrow {
+  margin-top: 26pt; font-size: 8.5pt; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--amber-600);
+}
+h1 { font-size: 26pt; line-height: 1.15; color: var(--navy-500); margin: 6pt 0 6pt; letter-spacing: -0.01em; }
+.subtitle { font-size: 13pt; color: var(--muted); margin: 0; }
+h2 {
+  font-size: 14pt; color: var(--navy-500); margin: 22pt 0 8pt; padding-left: 10pt;
+  border-left: 3px solid var(--amber-400); break-after: avoid;
+}
+h3 { font-size: 11.5pt; color: var(--navy-500); margin: 14pt 0 4pt; break-after: avoid; }
+p { margin: 0 0 8pt; }
+ul, ol { margin: 0 0 9pt; padding-left: 16pt; }
+li { margin: 0 0 3pt; }
+strong { color: var(--navy-800); }
+a { color: var(--amber-600); text-decoration: none; }
+code {
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; font-size: 9pt;
+  background: var(--wash); padding: 1pt 3pt; border-radius: 3pt;
+}
+table { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt; font-size: 9.5pt; break-inside: avoid; }
+th {
+  text-align: left; background: var(--navy-500); color: #fff; font-weight: 600;
+  padding: 5pt 7pt; border: 1px solid var(--navy-500);
+}
+td { padding: 5pt 7pt; border: 1px solid var(--rule); vertical-align: top; }
+tr:nth-child(even) td { background: var(--wash); }
+figure, p > img { break-inside: avoid; }
+img { max-width: 100%; display: block; margin: 8pt auto 6pt; }
+.closing {
+  margin-top: 24pt; padding: 12pt 14pt; background: var(--wash);
+  border-left: 3px solid var(--amber-400); font-size: 9.5pt; break-inside: avoid;
+}
+p:has(+ ul), p:has(+ ol) { break-after: avoid; }
