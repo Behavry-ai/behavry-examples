@@ -25,6 +25,7 @@ make it trustworthy written down next to the code.
 | Example | What the agent does | Systems | Guide | Code |
 | --- | --- | --- | --- | --- |
 | [Meraki Alert Triage](examples/meraki-alert-triage/) | Triages network alerts, writes a structured note to the PSA ticket, and asks a technician before it touches a device | Cisco Meraki, Halo PSA, an MCP gateway, Claude | [PDF](examples/meraki-alert-triage/guide.pdf) | [Python](examples/meraki-alert-triage/agent/) |
+| [Microsoft 365 User Lifecycle](examples/m365-user-lifecycle/) | Handles new-starter and leaver requests: locks leavers out at once, and holds every account creation and mailbox change for a technician | Microsoft 365, Halo PSA, an MCP gateway, Claude | [PDF](examples/m365-user-lifecycle/guide.pdf) | [Python](examples/m365-user-lifecycle/agent/) |
 
 ## What every example includes
 
@@ -34,7 +35,11 @@ examples/<name>/
   guide.md       the guide, written for the team that will run it
   guide.pdf      the same guide as a branded PDF, ready to share
   diagram.svg    how the agent's calls flow through Behavry
+  screenshots/   where each step is configured in the Behavry dashboard
   agent/         the runnable code, with its own README, tests and Dockerfile
+
+policies/        the Behavry policies the examples run under, with OPA tests
+tools/           the PDF builder and the screenshot capture script
 ```
 
 Each guide follows the same arc: what the example proves, how to scope a first

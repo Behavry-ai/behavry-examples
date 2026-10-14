@@ -1,0 +1,18 @@
+{
+  "clients": {
+    "40": {
+      "name": "Acme Clinic",
+      "tenant_id": "00000000-0000-4000-8000-00000000ac01",
+      "domains": ["acmeclinic.example"],
+      "usage_location": "US",
+      "license_sku": "M365_BUSINESS_PREMIUM",
+      "baseline_groups": ["All Staff"],
+      "departments": {
+        "Front desk": ["Front Desk"],
+        "Clinical": ["Clinical"],
+        "Practice management": ["Practice Management"],
+        "Billing": ["Billing"]
+      }
+    }
+  }
+}

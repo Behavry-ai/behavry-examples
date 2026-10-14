@@ -12,6 +12,7 @@ what it tried to do, and who approved it.
 | --- | --- |
 | **Guide** | [guide.pdf](guide.pdf) (source: [guide.md](guide.md)) |
 | **Code** | [agent/](agent/): Python, FastAPI, Anthropic SDK; 36 tests |
+| **Policy** | [policies/](../../policies/): the gateway policy, with OPA tests |
 | **Systems** | Cisco Meraki, Halo PSA, an MCP gateway in front of them, Claude |
 | **Behavry features** | Agent identity, model proxy, MCP gateway with per-system policy, approval queue, run labels |
 
