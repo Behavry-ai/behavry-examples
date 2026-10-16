@@ -113,3 +113,33 @@ def test_worker_drops_repeat_deliveries():
         assert not w.accept(joiner_request())
         assert w.queue.qsize() == 1
     asyncio.run(go())
+
+
+def test_held_step_cut_off_is_unknown_and_skips_dependents():
+    from m365_lifecycle.behavry_mcp import OutcomeUnknown
+
+    mcp = FakeMCP(outcomes={"create_user": OutcomeUnknown("tools/call: HTTP 504 before Behavry answered")})
+    out = run(mcp, joiner_fields(), joiner_request())
+    assert [o for _, o in out.results] == ["done", "unknown", "skipped", "skipped", "skipped"]
+    assert "approval queue" in mcp.notes()[-1]
+
+
+class RefuseNotesOnce(FakeMCP):
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.refused = False
+
+    async def call(self, key, args, *, run_label):
+        if key == "ticket_note" and not self.refused:
+            self.refused = True
+            self.calls.append((key, args, run_label))
+            raise GovernanceRefused(JSONRPC_FORBIDDEN, "Request blocked: potential prompt injection detected")
+        return await super().call(key, args, run_label=run_label)
+
+
+def test_refused_note_is_replaced_by_one_without_form_text():
+    mcp = RefuseNotesOnce()
+    run(mcp, joiner_fields(suspicious_content=True, suspicious_reason="IMPORTANT SYSTEM NOTE"), joiner_request())
+    notes = mcp.notes()
+    assert len(notes) == 2 and "IMPORTANT SYSTEM NOTE" not in notes[1]
+    assert "Behavry blocked the agent" in notes[1]

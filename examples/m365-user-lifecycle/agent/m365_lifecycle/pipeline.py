@@ -21,11 +21,11 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from m365_lifecycle.behavry_mcp import BehavryMCP, GatewayError, GovernanceRefused, ToolFailed
+from m365_lifecycle.behavry_mcp import BehavryMCP, GatewayError, GovernanceRefused, OutcomeUnknown, ToolFailed
 from m365_lifecycle.config import Settings
 from m365_lifecycle.extract import Extractor
 from m365_lifecycle.intake import Catalog, LifecycleRequest
-from m365_lifecycle.notes import outcome_note, plan_note, stopped_note
+from m365_lifecycle.notes import outcome_note, plan_note, refused_note, stopped_note
 from m365_lifecycle.plan import Plan, Step, build_plan
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,18 @@ class Pipeline:
         args: dict[str, Any] = {"ticket_id": ticket_id, "note": body, "send_email": False}
         if self._s.halo_note_actiontype_id is not None:
             args["actiontype_id"] = self._s.halo_note_actiontype_id
-        await self._mcp.call("ticket_note", args, run_label=out.run_label)
+        try:
+            await self._mcp.call("ticket_note", args, run_label=out.run_label)
+        except GovernanceRefused as exc:
+            # Behavry refused the note itself, for example because it quoted form
+            # text it judged to be an injection. Write one note with no form text
+            # instead, and never resend the refused content.
+            logger.warning("request %s: Behavry refused a ticket note: %s", out.request_id, exc)
+            args["note"] = refused_note(out.request_id, str(exc))
+            try:
+                await self._mcp.call("ticket_note", args, run_label=out.run_label)
+            except GovernanceRefused:
+                logger.error("request %s: Behavry refused the minimal note too", out.request_id)
 
     async def process(self, req: LifecycleRequest) -> Outcome:
         out = Outcome(request_id=req.request_id, run_label=run_label_for(req))
@@ -118,6 +129,11 @@ class Pipeline:
             if not exc.after_review:
                 return "refused"
             return "timed_out" if exc.resolution == "timed_out" else "rejected"
+        except OutcomeUnknown:
+            # The connection closed while the step was held for approval. It may
+            # still be approved and run, so it is neither done nor failed.
+            logger.warning("request %s: step %s outcome unknown", out.request_id, step.tool)
+            return "unknown"
         except (ToolFailed, GatewayError):
             logger.warning("request %s: step %s failed", out.request_id, step.tool)
             return "failed"

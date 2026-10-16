@@ -128,6 +128,10 @@ agent should treat that as a normal outcome:
 - Wait for the decision. Behavry holds the call for up to 30 minutes depending
   on the agent's risk tier, so the agent's own timeout must be longer (the
   example waits 31). On a timeout, hand the ticket to a person.
+- If something between the agent and Behavry, such as a load balancer, closes
+  the connection before a decision, treat the outcome as unknown, not failed:
+  the request may still be approved and carried out. Say so on the ticket and
+  do not ask again.
 - Treat a rejection or a timeout as a result to record, never a reason to
   retry.
 - Name the approvers before go-live, and decide where they approve: the
@@ -158,6 +162,41 @@ first item; the rest need a real device on the test network.
 - A remediation request is held and rejected, and the agent records it without
   retrying.
 - The injection alert is flagged and nothing it asks for happens.
+
+## What it looks like in Behavry
+
+These screens come from a real run of the example agent against Behavry's demo
+plane, with a stand-in gateway and fictional data.
+
+**Map the gateway once.** Register your gateway in Behavry, mark it as a
+gateway, and map each system it fronts. Policy and the record can then tell a
+Halo call from a Meraki or RMM call.
+
+![Gateway configuration: halo, meraki, rmm and m365 mapped by tool-name prefix](screenshots/02-gateway-mapping.png)
+
+**Write the policy per system.** The example policy allows reads and PSA
+notes, holds any device action for a person, and refuses destructive ones.
+
+![The example policy in Behavry's policy editor](screenshots/03-policy.png)
+
+**A reboot waits for a technician.** When the agent asked to reboot an access
+point that had stopped serving clients, Behavry held the call. The technician
+sees the tool, the system it targets, and why it was held, and decides.
+
+![A held meraki_reboot_device request in the approval queue](screenshots/04-approval-queue.png)
+
+**The trail for one alert.** Every call the agent made for an alert sits on one
+signed trail: the lookups, the model call, each write and its outcome.
+
+![The agent's evidence trail in Behavry, chain verified](screenshots/05-decision-trace.png)
+
+**An injection attempt, stopped twice.** In the test run, a rogue access point
+broadcast a network name written as an instruction. The agent's code flagged
+it and asked for no action. When its triage note quoted that text, Behavry's
+outbound check blocked the write as a critical injection. The agent then wrote
+a short note with none of the alert's text, and handed the ticket to a person.
+
+![Behavry blocked the ticket write that quoted the injected text](screenshots/06-blocked-write.png)
 
 ## The example code
 

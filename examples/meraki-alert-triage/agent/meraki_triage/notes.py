@@ -5,6 +5,7 @@ one in ten seconds and know how far to trust it.
 """
 from __future__ import annotations
 
+import re
 from html import escape
 
 from meraki_triage.alerts import MerakiAlert
@@ -52,6 +53,28 @@ def triage_note(alert: MerakiAlert, triage: Triage, *, flagged_fields: list[str]
         ))
     parts.append(f"<p><small>Meraki alert {escape(alert.stable_id)}</small></p>")
     return "".join(parts)
+
+
+_SERIAL = re.compile(r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
+
+
+def safe_ticket_summary(alert: MerakiAlert) -> str:
+    """A summary with no alert-derived free text: only a well-formed serial."""
+    serial = alert.device_serial if alert.device_serial and _SERIAL.match(alert.device_serial) else None
+    return "Meraki: alert needs review" + (f" [{serial}]" if serial else "")
+
+
+def refused_write_note(alert: MerakiAlert, reason: str) -> str:
+    """Written when Behavry refused the full note. Carries no alert text."""
+    return (
+        f"<p><em>{escape(SIGNATURE)}</em></p>"
+        + _p("Needs review:", (
+            "Behavry blocked the agent's triage note for this alert: "
+            f"{reason}. The alert's own text was left out of this ticket on purpose. "
+            "Review the alert in Meraki and the Decision Trace in Behavry."
+        ))
+        + f"<p><small>Meraki alert {escape(alert.stable_id)}</small></p>"
+    )
 
 
 def recovery_note(alert: MerakiAlert) -> str:

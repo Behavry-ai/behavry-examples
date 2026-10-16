@@ -28,8 +28,10 @@ Shot list format::
 
 ``steps`` run in order: ``click``, ``fill`` (with ``value``), ``scroll_to``,
 ``wait_for`` and ``wait_ms``. ``clip_to`` captures one element instead of the
-viewport, ``hide`` removes floating widgets, and ``mask`` blacks out anything that must not be published (account
-names, tokens, ids). Files are written relative to the shot list's folder.
+viewport, ``crop_left`` (a fraction of the width, for side drawers) trims the
+blurred page behind a drawer, ``hide`` removes floating widgets, and ``mask``
+blacks out anything that must not be published (account names, tokens, ids).
+Files are written relative to the shot list's folder.
 Review every image before committing it: the examples are public.
 """
 from __future__ import annotations
@@ -89,7 +91,17 @@ def capture(spec_path: Path, only: set[str] | None) -> None:
             masks = [page.locator(s) for s in ALWAYS_MASK + shot.get("mask", [])]
             target = page.locator(shot["clip_to"]).first if shot.get("clip_to") else page
             target.screenshot(path=str(out), mask=masks, mask_color="#0A1628", animations="disabled")
+            if shot.get("crop_left"):
+                crop_left(out, shot["crop_left"])
             print(out.relative_to(base))
+
+
+def crop_left(path: Path, fraction: float) -> None:
+    """Keep the right-hand part of an image, from ``fraction`` of its width."""
+    from PIL import Image
+
+    with Image.open(path) as im:
+        im.crop((int(im.width * fraction), 0, im.width, im.height)).save(path)
 
 
 if __name__ == "__main__":

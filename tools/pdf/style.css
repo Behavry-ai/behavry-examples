@@ -47,3 +47,8 @@ img { max-width: 100%; display: block; margin: 8pt auto 6pt; }
   border-left: 3px solid var(--amber-400); font-size: 9.5pt; break-inside: avoid;
 }
 p:has(+ ul), p:has(+ ol) { break-after: avoid; }
+img { border: 1px solid var(--rule); border-radius: 6pt; break-inside: avoid; }
+p:has(> img) { break-inside: avoid; margin: 6pt 0 14pt; }
+p:has(+ p > img) { break-after: avoid; }
+p > img { max-height: 5.6in; width: auto; max-width: 100%; }
+p:has(+ p > img) { break-inside: avoid; }

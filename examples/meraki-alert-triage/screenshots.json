@@ -1,0 +1,103 @@
+{
+  "plane": "https://demo.behavry.ai",
+  "shots": [
+    {
+      "id": "02",
+      "file": "screenshots/02-gateway-mapping.png",
+      "caption": "Mark the gateway and map each system it fronts",
+      "path": "/provisioning",
+      "steps": [
+        {
+          "scroll_to": "text=example-msp-gateway"
+        },
+        {
+          "click": "tr:has-text('example-msp-gateway') [title='Configure downstream systems'], div:has-text('example-msp-gateway') >> [title='Configure downstream systems']"
+        },
+        {
+          "wait_ms": 1500
+        }
+      ],
+      "crop_left": 0.635
+    },
+    {
+      "id": "03",
+      "file": "screenshots/03-policy.png",
+      "caption": "The per-system policy for the gateway",
+      "path": "/policies/writer/bacfa5f1-9a15-493f-b5ba-f1c5bb135030",
+      "steps": [
+        {
+          "wait_ms": 2500
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "file": "screenshots/04-approval-queue.png",
+      "caption": "The reboot request waits in Behavry's approval queue until a technician decides",
+      "path": "/escalations",
+      "steps": [
+        {
+          "wait_for": "text=meraki_reboot_device"
+        },
+        {
+          "wait_ms": 1000
+        }
+      ],
+      "clip_to": "text=meraki_reboot_device >> xpath=ancestor::div[.//button[contains(., 'Approve')]][1]"
+    },
+    {
+      "id": "05",
+      "file": "screenshots/05-decision-trace.png",
+      "caption": "One alert's signed trail: lookups, the model call, the blocked note, the clean ticket, the hand-off",
+      "path": "/agents",
+      "steps": [
+        {
+          "wait_for": "text=meraki-triage-example"
+        },
+        {
+          "click": "text=meraki-triage-example"
+        },
+        {
+          "wait_ms": 1200
+        },
+        {
+          "click": "text=Evidence"
+        },
+        {
+          "wait_ms": 2500
+        }
+      ],
+      "crop_left": 0.635
+    },
+    {
+      "id": "06",
+      "file": "screenshots/06-blocked-write.png",
+      "caption": "Behavry blocked the note that quoted the injected network name",
+      "path": "/agents",
+      "steps": [
+        {
+          "wait_for": "text=meraki-triage-example"
+        },
+        {
+          "click": "text=meraki-triage-example"
+        },
+        {
+          "wait_ms": 1200
+        },
+        {
+          "click": "text=Evidence"
+        },
+        {
+          "wait_ms": 2500
+        },
+        {
+          "click": "text=deny"
+        },
+        {
+          "wait_ms": 2000
+        }
+      ],
+      "crop_left": 0.53
+    }
+  ]
+}

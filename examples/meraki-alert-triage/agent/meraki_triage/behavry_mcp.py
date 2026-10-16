@@ -10,8 +10,10 @@ signed record before it reaches your MCP gateway. Three things matter to this ag
   alert, model calls included, into one Decision Trace.
 * **Held calls take a while.** When policy says a call needs approval, Behavry
   holds the request open until a person decides or the hold times out (up to
-  30 minutes, by the agent's risk tier). The read timeout is set above that so
-  the client never gives up while a reviewer is still deciding.
+  30 minutes, by the agent's risk tier). The read timeout is set above that.
+  A load balancer in front of Behavry may still close the connection sooner
+  (a 504): that is ``OutcomeUnknown``, because the request can still be
+  approved and executed after the agent stops waiting.
 """
 from __future__ import annotations
 
@@ -51,6 +53,12 @@ class GovernanceRefused(RuntimeError):
         self.after_review = code == JSONRPC_ESCALATED
         # "denied" or "timed_out" for a held call; None otherwise.
         self.resolution = resolution
+
+
+class OutcomeUnknown(GatewayError):
+    """The connection ended before Behavry answered, typically a load balancer
+    timeout while the call was held for approval. The request may still be
+    approved and executed: never treat this as a failure, and never retry."""
 
 
 class ToolFailed(RuntimeError):
@@ -100,8 +108,12 @@ class BehavryMCP:
         headers = {RUN_ID_HEADER: run_label} if run_label else {}
         try:
             resp = await self._http.post(self._url, json=body, headers=headers)
+        except httpx.TimeoutException as exc:
+            raise OutcomeUnknown(f"{method}: no answer before the connection timed out") from exc
         except httpx.HTTPError as exc:
             raise GatewayError(f"{method}: {type(exc).__name__}: {exc}") from exc
+        if resp.status_code in (502, 503, 504) and method == "tools/call":
+            raise OutcomeUnknown(f"{method}: HTTP {resp.status_code} before Behavry answered")
         if resp.status_code == 401:
             raise GatewayError("Behavry rejected the agent credentials (401)")
         if resp.status_code >= 400:

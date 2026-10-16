@@ -1,0 +1,44 @@
+{
+  "plane": "https://demo.behavry.ai",
+  "shots": [
+    {
+      "id": "01",
+      "file": "screenshots/01-account-held.png",
+      "caption": "Creating the new starter's account waits in Behavry's approval queue",
+      "path": "/escalations",
+      "steps": [
+        {
+          "wait_for": "text=m365_create_user"
+        },
+        {
+          "wait_ms": 800
+        }
+      ],
+      "clip_to": "text=m365_create_user >> xpath=ancestor::div[.//button[contains(., 'Approve')]][1]"
+    },
+    {
+      "id": "02",
+      "file": "screenshots/02-request-trail.png",
+      "caption": "Every step of the request on one signed trail",
+      "path": "/agents",
+      "steps": [
+        {
+          "wait_for": "text=m365-lifecycle-example"
+        },
+        {
+          "click": "text=m365-lifecycle-example"
+        },
+        {
+          "wait_ms": 1200
+        },
+        {
+          "click": "text=Evidence"
+        },
+        {
+          "wait_ms": 2500
+        }
+      ],
+      "crop_left": 0.635
+    }
+  ]
+}

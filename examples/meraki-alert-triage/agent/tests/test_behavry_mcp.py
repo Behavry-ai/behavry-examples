@@ -122,3 +122,10 @@ def test_bad_credentials_and_unresolved_tools_are_gateway_errors():
         asyncio.run(_resolved(lambda r: httpx.Response(401)).call("add_action", {}, run_label="x"))
     with pytest.raises(GatewayError, match="not resolved"):
         asyncio.run(client(lambda r: httpx.Response(200)).call("create_ticket", {}, run_label="x"))
+
+
+def test_gateway_timeout_on_a_call_is_outcome_unknown():
+    from meraki_triage.behavry_mcp import OutcomeUnknown
+
+    with pytest.raises(OutcomeUnknown):
+        asyncio.run(_resolved(lambda r: httpx.Response(504)).call("add_action", {}, run_label="x"))

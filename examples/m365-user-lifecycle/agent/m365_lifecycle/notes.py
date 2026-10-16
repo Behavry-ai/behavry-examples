@@ -20,6 +20,8 @@ OUTCOME_WORDS = {
     "refused": "not done: policy does not allow it",
     "failed": "not done: the system reported an error",
     "skipped": "skipped: an earlier step did not complete",
+    "unknown": ("still waiting for a decision in Behavry when the connection closed; if it is "
+                "approved it will run, so check the approval queue before doing it by hand"),
 }
 
 
@@ -54,6 +56,14 @@ def stopped_note(plan: Plan, request_id: str) -> str:
         parts += ["<p>Also asked for:</p>", _list(plan.for_person)]
     parts.append(f"<p><small>Request {escape(request_id)}</small></p>")
     return "".join(parts)
+
+
+def refused_note(request_id: str, reason: str) -> str:
+    """Written when Behavry refused a note. Carries no form-derived text."""
+    return (_head() + f"<p><strong>Needs review:</strong> Behavry blocked the agent's note on this "
+            f"request: {escape(reason)}. The form's text was left out on purpose. Review the request "
+            "and its Decision Trace in Behavry.</p>"
+            + f"<p><small>Request {escape(request_id)}</small></p>")
 
 
 def outcome_note(plan: Plan, outcomes: list[tuple[str, str]], request_id: str) -> str:

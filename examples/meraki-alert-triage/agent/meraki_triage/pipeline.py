@@ -19,13 +19,15 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from meraki_triage.alerts import MerakiAlert, instruction_like_fields
-from meraki_triage.behavry_mcp import BehavryMCP, GatewayError, GovernanceRefused, ToolFailed
+from meraki_triage.behavry_mcp import BehavryMCP, GatewayError, GovernanceRefused, OutcomeUnknown, ToolFailed
 from meraki_triage.config import Settings
 from meraki_triage.notes import (
     PRIORITY_BY_SEVERITY,
     recovery_note,
+    refused_write_note,
     remediation_outcome_note,
     remediation_requested_note,
+    safe_ticket_summary,
     ticket_summary,
     triage_note,
 )
@@ -47,7 +49,7 @@ class Outcome:
     created_ticket: bool = False
     triage: Triage | None = None
     assigned_to_human: bool = False
-    remediation: str | None = None  # approved, rejected, timed_out, refused, failed
+    remediation: str | None = None  # approved, rejected, timed_out, refused, failed, unknown
     steps: list[str] = field(default_factory=list)
 
 
@@ -183,26 +185,20 @@ class Pipeline:
         out.triage = triage
         note = triage_note(alert, triage, flagged_fields=flagged)
 
+        try:
+            ticket_id = await self._write_triage(out, alert, triage, note, ticket_id, client_id, site_id)
+        except GovernanceRefused as exc:
+            # Behavry refused the write itself, for example because the note
+            # quoted alert text it judged to be a prompt injection. Record that
+            # with a note that carries no alert-derived text, hand it to a
+            # person, and stop: never retry the refused content.
+            out.steps.append("write_refused")
+            logger.warning("alert %s: Behavry refused the triage write: %s", out.alert_id, exc)
+            triage = triage.model_copy(update={"suspicious_content": True, "needs_human": True})
+            out.triage = triage
+            ticket_id = await self._write_minimal(out, alert, str(exc), ticket_id, client_id, site_id)
         if ticket_id is None:
-            args: dict[str, Any] = {
-                "summary": ticket_summary(alert, triage),
-                "details": note,
-                "priority_id": PRIORITY_BY_SEVERITY[triage.severity],
-            }
-            if client_id is not None:
-                args["client_id"] = client_id
-            if site_id is not None:
-                args["site_id"] = site_id
-            if self._s.halo_ticket_type_id is not None:
-                args["tickettype_id"] = self._s.halo_ticket_type_id
-            created = _records(await self._call(out, "create_ticket", args), "tickets")
-            ticket_id = _int_or_none(created[0].get("id")) if created else None
-            out.ticket_id, out.created_ticket = ticket_id, True
-            if ticket_id is None:
-                logger.warning("alert %s: ticket created but no id came back", out.alert_id)
-                return
-        else:
-            await self._note(out, ticket_id, note)
+            return
 
         needs_human = triage.needs_human or triage.confidence == "low" or triage.suspicious_content
         if needs_human and (self._s.halo_oncall_agent_id or self._s.halo_oncall_team):
@@ -216,6 +212,47 @@ class Pipeline:
 
         if self._wants_remediation(triage):
             await self._request_reboot(out, alert, ticket_id)
+
+    async def _write_triage(self, out: Outcome, alert: MerakiAlert, triage: Triage, note: str,
+                            ticket_id: int | None, client_id: int | None, site_id: int | None) -> int | None:
+        if ticket_id is not None:
+            await self._note(out, ticket_id, note)
+            return ticket_id
+        args: dict[str, Any] = {
+            "summary": ticket_summary(alert, triage),
+            "details": note,
+            "priority_id": PRIORITY_BY_SEVERITY[triage.severity],
+        }
+        return await self._create(out, args, client_id, site_id)
+
+    async def _create(self, out: Outcome, args: dict[str, Any], client_id: int | None,
+                      site_id: int | None) -> int | None:
+        if client_id is not None:
+            args["client_id"] = client_id
+        if site_id is not None:
+            args["site_id"] = site_id
+        if self._s.halo_ticket_type_id is not None:
+            args["tickettype_id"] = self._s.halo_ticket_type_id
+        created = _records(await self._call(out, "create_ticket", args), "tickets")
+        ticket_id = _int_or_none(created[0].get("id")) if created else None
+        out.ticket_id, out.created_ticket = ticket_id, True
+        if ticket_id is None:
+            logger.warning("alert %s: ticket created but no id came back", out.alert_id)
+        return ticket_id
+
+    async def _write_minimal(self, out: Outcome, alert: MerakiAlert, reason: str,
+                             ticket_id: int | None, client_id: int | None, site_id: int | None) -> int | None:
+        note = refused_write_note(alert, reason)
+        try:
+            if ticket_id is not None:
+                await self._note(out, ticket_id, note)
+                return ticket_id
+            return await self._create(out, {"summary": safe_ticket_summary(alert), "details": note,
+                                            "priority_id": 2}, client_id, site_id)
+        except GovernanceRefused as exc:
+            logger.error("alert %s: Behavry refused the minimal note too: %s", out.alert_id, exc)
+            out.steps.append("minimal_write_refused")
+            return None
 
     def _wants_remediation(self, triage: Triage) -> bool:
         return (
@@ -242,6 +279,16 @@ class Pipeline:
                 out.remediation = "rejected"
                 text = "Not carried out: a reviewer rejected it in Behavry."
             await self._note(out, ticket_id, remediation_outcome_note(action, text))
+            return
+        except OutcomeUnknown:
+            # The connection closed while the request was held (for example a
+            # load balancer timeout). It may still be approved and executed.
+            out.remediation = "unknown"
+            await self._note(out, ticket_id, remediation_outcome_note(
+                action, "Still waiting for a decision in Behavry when the connection closed. If it is "
+                "approved, the device will reboot. Check the approval queue and the device before "
+                "doing anything else; the agent will not ask again.",
+            ))
             return
         except (ToolFailed, GatewayError) as exc:
             out.remediation = "failed"
