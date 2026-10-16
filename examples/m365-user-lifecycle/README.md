@@ -19,6 +19,16 @@ Decision Trace.
 
 ![How one request flows through Behavry](diagram.svg)
 
+## What it looks like in Behavry
+
+From a real run against Behavry's demo plane (stand-in gateway, fictional data):
+
+| Account creation waits for a technician | A leaver: locked out at once, then each change approved |
+| --- | --- |
+| ![Held m365_create_user in the approval queue](screenshots/01-account-held.png) | ![The leaver request's evidence trail](screenshots/02-request-trail.png) |
+
+More screens and what each one shows are in the [guide](guide.pdf).
+
 ## What it shows
 
 - **Speed where it protects, approval where it grants.** Blocking a leaver's

@@ -21,6 +21,31 @@ ticket, and the whole request is one Decision Trace.
 
 ![How one request flows through Behavry](diagram.svg)
 
+## What it looks like in Behavry
+
+These screens come from a real run of the example agent against Behavry's demo
+plane, with a stand-in gateway and fictional data.
+
+**Map the gateway and set the policy once.** The same gateway and policy serve
+both MSP examples: Microsoft 365 calls are recognised as their own system, and
+each tool is allowed, held or refused.
+
+![Gateway configuration with Microsoft 365 mapped](screenshots/02-gateway-mapping.png)
+
+![The example policy in Behavry's policy editor](screenshots/03-policy.png)
+
+**Account creation waits for a technician.** For a new starter, the agent's
+plan ran up to creating the account, and Behavry held that call. Once approved,
+the standard licence and groups followed without waiting.
+
+![A held m365_create_user request in the approval queue](screenshots/01-account-held.png)
+
+**A leaver, on one signed trail.** The account was found, sign-in was blocked
+and every session ended without waiting. The mailbox conversion and licence
+removal were each held, approved, and then carried out.
+
+![The leaver request's evidence trail in Behavry](screenshots/02-request-trail.png)
+
 ## The rule that shapes everything: speed where it protects, approval where it grants
 
 Joiners and leavers are not symmetric, and the policy should not treat them
@@ -143,31 +168,6 @@ Test script before go-live, with a sandbox tenant:
   day stops with the reason on the ticket.
 - A form asking for administrator rights is stopped and flagged.
 - The same request sent twice is processed once.
-
-## What it looks like in Behavry
-
-These screens come from a real run of the example agent against Behavry's demo
-plane, with a stand-in gateway and fictional data.
-
-**Map the gateway and set the policy once.** The same gateway and policy serve
-both MSP examples: Microsoft 365 calls are recognised as their own system, and
-each tool is allowed, held or refused.
-
-![Gateway configuration with Microsoft 365 mapped](screenshots/02-gateway-mapping.png)
-
-![The example policy in Behavry's policy editor](screenshots/03-policy.png)
-
-**Account creation waits for a technician.** For a new starter, the agent's
-plan ran up to creating the account, and Behavry held that call. Once approved,
-the standard licence and groups followed without waiting.
-
-![A held m365_create_user request in the approval queue](screenshots/01-account-held.png)
-
-**A leaver, on one signed trail.** The account was found, sign-in was blocked
-and every session ended without waiting. The mailbox conversion and licence
-removal were each held, approved, and then carried out.
-
-![The leaver request's evidence trail in Behavry](screenshots/02-request-trail.png)
 
 ## The example code
 

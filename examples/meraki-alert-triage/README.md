@@ -18,6 +18,20 @@ what it tried to do, and who approved it.
 
 ![How one alert flows through Behavry](diagram.svg)
 
+## What it looks like in Behavry
+
+From a real run against Behavry's demo plane (stand-in gateway, fictional data):
+
+| A reboot waits for a technician | Behavry blocks a note that quoted injected text |
+| --- | --- |
+| ![Held reboot in the approval queue](screenshots/04-approval-queue.png) | ![Blocked write, outbound injection](screenshots/06-blocked-write.png) |
+
+| One alert's signed trail | The gateway, mapped per system |
+| --- | --- |
+| ![Evidence trail](screenshots/05-decision-trace.png) | ![Gateway configuration](screenshots/02-gateway-mapping.png) |
+
+More screens and what each one shows are in the [guide](guide.pdf).
+
 ## What it shows
 
 - **Noise handling first.** Duplicate alerts are dropped and a brief outage that
