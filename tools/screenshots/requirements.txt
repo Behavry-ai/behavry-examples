@@ -1,2 +1,2 @@
 playwright>=1.45,<2
-pillow>=10,<13
+pillow>=13,<14
